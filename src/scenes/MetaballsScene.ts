@@ -55,13 +55,10 @@ export class MetaballsScene implements SceneModule {
       envMapIntensity: 1.0,
     })
 
-    // MarchingCubes effect
-    // Resolution 28, maxPolyCount 100000
-    this.effect = new MarchingCubes(28, material, true, true, 100000)
+    // MarchingCubes effect — enableUvs=false, enableColors=false
+    this.effect = new MarchingCubes(28, material, false, false, 100000)
     this.effect.position.set(-1.25, -1.25, -1.25)
     this.effect.scale.set(2.5, 2.5, 2.5)
-    this.effect.enableUvs = false
-    this.effect.enableColors = false
 
     this.scene.add(this.effect)
   }
@@ -112,6 +109,9 @@ export class MetaballsScene implements SceneModule {
 
     // Slow rotation
     this.effect.rotation.y = time * 0.2
+
+    // Rebuild geometry from the updated field
+    this.effect.update()
 
     this.renderer.render(this.scene, this.camera)
   }
