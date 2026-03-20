@@ -304,4 +304,79 @@ const buf = new Uint8Array(4)
 renderer.readRenderTargetPixels(pickRT, mouseX, mouseY, 1, 1, buf)
 const pickedId = (buf[0] << 16) | (buf[1] << 8) | buf[2]`,
   },
+  {
+    id: 'strange-attractor',
+    title: 'Strange Attractors',
+    subtitle: 'Lorenz · Halvorsen · Thomas · GPGPU · Chaos Theory',
+    description:
+      '<strong>Strange attractors</strong> are the fingerprints of chaos. 262,144 particles each integrate a differential equation — Lorenz, Halvorsen, or Thomas — every frame entirely on the GPU using ping-pong render targets. The particles never settle, never repeat, yet trace the same fractal shape forever. Color encodes instantaneous velocity: slow particles glow blue, fast ones burn gold. The scene auto-cycles between attractors every 12 seconds.',
+    tags: ['GPGPU', 'ping-pong', 'RK4', 'chaos', 'FloatType', 'AdditiveBlending'],
+    code: `// 512×512 float texture = 262,144 particles
+// Each texel stores (x, y, z, speed)
+
+// Simulation fragment shader — RK4 integration of Lorenz:
+// dx/dt = σ(y−x),  dy/dt = x(ρ−z)−y,  dz/dt = xy−βz
+vec3 lorenz(vec3 p) {
+  return vec3(10.0*(p.y-p.x), p.x*(28.0-p.z)-p.y, p.x*p.y - 2.667*p.z);
+}
+// RK4 step
+vec3 k1 = lorenz(p);
+vec3 k2 = lorenz(p + 0.5*dt*k1);
+vec3 k3 = lorenz(p + 0.5*dt*k2);
+vec3 k4 = lorenz(p + dt*k3);
+vec3 np = p + (dt/6.0)*(k1 + 2.0*k2 + 2.0*k3 + k4);
+
+// Vertex shader reads position from texture via UV attribute
+vec4 data  = texture2D(uPos, aUv);
+vec3 world = data.xyz * uScale;
+gl_PointSize = clamp(200.0 / -mv.z, 1.0, 3.0);`,
+  },
+  {
+    id: 'metaballs',
+    title: 'Metaballs',
+    subtitle: 'Marching Cubes · Isosurface · Implicit Surface',
+    description:
+      '<strong>Metaballs</strong> are implicit surfaces defined by a scalar field: each ball contributes <em>strength / distance²</em> to every point in space. Where the summed field exceeds a threshold, surface exists. <strong>Marching Cubes</strong> extracts this isosurface by classifying each grid cube\'s 8 corners as inside or outside, then interpolating along the 12 edges to produce triangles. Six balls orbit at different frequencies, creating organic blobs that merge and split in real time.',
+    tags: ['MarchingCubes', 'isosurface', 'implicit surface', 'scalar field', 'procedural mesh'],
+    code: `import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js'
+
+// resolution=28 → 28³ = 21,952 cells evaluated per frame
+const effect = new MarchingCubes(28, material, false, false, 100000)
+effect.isolation = 80  // isosurface threshold
+
+// Each frame: reset field, add balls, Three.js rebuilds geometry
+effect.reset()
+for (const ball of balls) {
+  // positions in [0,1] space, strength/subtract control size
+  effect.addBall(ball.x, ball.y, ball.z, 0.5, 12)
+}
+// geometry auto-updates on next render`,
+  },
+  {
+    id: 'ocean',
+    title: 'Ocean Waves',
+    subtitle: 'Gerstner Waves · Fresnel · Analytical Normals',
+    description:
+      '<strong>Gerstner waves</strong> are the physically correct model for deep-water surface waves. Unlike simple sine displacement, they move water particles in circles — producing the characteristic sharp crests and flat troughs of real ocean waves. Four wave trains with different directions, wavelengths, and speeds are summed in the vertex shader. Normals are computed <em>analytically</em> from the wave derivatives (no finite differences needed). <strong>Fresnel</strong> makes grazing angles reflective; specular highlights track the sun.',
+    tags: ['Gerstner waves', 'vertex shader', 'Fresnel', 'analytical normals', 'GLSL'],
+    code: `// Gerstner wave formula (one component):
+// k = 2π/wavelength,  c = sqrt(9.8/k),  f = k*(dot(dir,xz) - c*speed*t)
+float k = 2.0 * PI / wavelength;
+float c = sqrt(9.8 / k);
+float f = k * (dot(dir, pos.xz) - c * speed * uTime);
+
+// Vertex displacement
+pos.x += steepness * amplitude * dir.x * cos(f);
+pos.z += steepness * amplitude * dir.z * cos(f);
+pos.y += amplitude * sin(f);
+
+// Analytical normal (no texture lookups needed)
+normal.x -= steepness * k * amplitude * dir.x * sin(f);
+normal.z -= steepness * k * amplitude * dir.z * sin(f);
+normal.y -= steepness * k * amplitude * cos(f);
+
+// Fresnel in fragment shader
+float fresnel = pow(1.0 - dot(N, V), 3.0);
+vec3 color = mix(deepWater, surfaceWater, fresnel);`,
+  },
 ]

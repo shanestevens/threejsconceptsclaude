@@ -226,6 +226,18 @@ export class SceneManager {
           const { GPUPickingScene } = await import('./scenes/GPUPickingScene')
           return new GPUPickingScene()
         }
+        case 'strange-attractor': {
+          const { StrangeAttractorScene } = await import('./scenes/StrangeAttractorScene')
+          return new StrangeAttractorScene()
+        }
+        case 'metaballs': {
+          const { MetaballsScene } = await import('./scenes/MetaballsScene')
+          return new MetaballsScene()
+        }
+        case 'ocean': {
+          const { OceanScene } = await import('./scenes/OceanScene')
+          return new OceanScene()
+        }
         // ── Physics ───────────────────────────────────────────
         case 'physics-rigid-bodies': {
           const { RigidBodiesScene } = await import('./scenes/RigidBodiesScene')

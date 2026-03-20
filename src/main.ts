@@ -22,7 +22,8 @@ const ACCENT: Record<string, string> = {
   gpgpu: '#ef4444', 'ray-marching': '#06b6d4', 'procedural-terrain': '#22c55e',
   hologram: '#00ffcc', 'cloth-sim': '#8b5cf6', 'depth-buffer': '#f59e0b',
   'volumetric-light': '#fbbf24', 'reaction-diffusion': '#a3e635', 'batched-mesh': '#6366f1',
-  'gpu-picking': '#ec4899',
+  'gpu-picking': '#ec4899', 'strange-attractor': '#818cf8', 'metaballs': '#34d399',
+  'ocean': '#38bdf8',
   // Physics
   'physics-rigid-bodies': '#f97316', 'physics-wrecking-ball': '#ef4444',
   'physics-dominoes': '#6366f1', 'physics-jenga': '#22c55e', 'physics-ragdoll': '#ec4899',
@@ -43,7 +44,7 @@ const LEVEL_META: Record<Level, { label: string; badge: string; headline: string
   },
   advanced: {
     label: 'Advanced',
-    badge: '11 concepts',
+    badge: '14 concepts',
     headline: 'GPU-Level Mastery',
     sub: 'GPGPU, Ray Marching, Procedural Terrain, Cloth Simulation, Depth Buffer effects, and more.',
   },
