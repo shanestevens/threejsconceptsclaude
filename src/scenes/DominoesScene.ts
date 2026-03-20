@@ -137,15 +137,15 @@ export class DominoesScene implements SceneModule {
       mesh.rotation.y    = angle
       this.scene.add(mesh)
 
-      // Physics: dynamic body, start upright
+      // Physics: dynamic body, start upright — rotation on the body, not the collider
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, 0))
       const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
         .setTranslation(x, yPos, z)
+        .setRotation({ x: q.x, y: q.y, z: q.z, w: q.w })
       const body = this.world!.createRigidBody(bodyDesc)
 
-      // Rotate collider to match mesh orientation
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, 0))
+      // Collider in body-local space (body is already oriented)
       const colDesc = RAPIER.ColliderDesc.cuboid(DOMINO_HX, DOMINO_HY, DOMINO_HZ)
-        .setRotation({ x: q.x, y: q.y, z: q.z, w: q.w })
       this.world!.createCollider(colDesc, body)
 
       this.dominoes.push({ body, mesh })
@@ -180,7 +180,17 @@ export class DominoesScene implements SceneModule {
       this.started = true
       const first = this.dominoes[0]
       if (first) {
-        first.body.applyImpulse({ x: 0, y: 0, z: -2 }, true)
+        // Push the TOP of domino 0 toward domino 1 (off-center → tips rather than slides)
+        const c0 = this.curvePos(0)
+        const c1 = this.curvePos(1)
+        const dx = c1.x - c0.x
+        const dz = c1.z - c0.z
+        const len = Math.sqrt(dx * dx + dz * dz)
+        first.body.applyImpulseAtPoint(
+          { x: (dx / len) * 1.5, y: 0, z: (dz / len) * 1.5 },
+          { x: c0.x, y: DOMINO_HY * 1.8, z: c0.z },
+          true,
+        )
       }
     }
 

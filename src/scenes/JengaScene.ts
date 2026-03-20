@@ -115,14 +115,14 @@ export class JengaScene implements SceneModule {
         let rotY = 0
 
         if (isXRow) {
-          // Blocks along X axis
-          x = (slot - 1) * 0.65
-          z = 0
+          // Blocks extend along X; three are placed side-by-side in Z
+          x = 0
+          z = (slot - 1) * 0.6
           rotY = 0
         } else {
-          // Blocks along Z axis — rotate PI/2 around Y
-          x = 0
-          z = (slot - 1) * 0.65
+          // Blocks extend along Z (rotated 90°); three placed side-by-side in X
+          x = (slot - 1) * 0.6
+          z = 0
           rotY = Math.PI / 2
         }
 
