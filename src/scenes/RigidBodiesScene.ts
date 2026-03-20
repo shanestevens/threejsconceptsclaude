@@ -33,7 +33,7 @@ export class RigidBodiesScene implements SceneModule {
     this.renderer.setSize(width, height)
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.renderer.shadowMap.enabled = true
-    this.renderer.shadowMap.type    = THREE.PCFSoftShadowMap
+    this.renderer.shadowMap.type    = THREE.PCFShadowMap
 
     // Scene + camera
     this.scene  = new THREE.Scene()

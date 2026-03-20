@@ -21,7 +21,7 @@ export class ShadowsScene implements SceneModule {
     this.renderer.setSize(width, height)
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.renderer.shadowMap.enabled = true
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    this.renderer.shadowMap.type = THREE.PCFShadowMap
 
     this.scene.add(new THREE.AmbientLight(0x6688aa, 1.2))
 
