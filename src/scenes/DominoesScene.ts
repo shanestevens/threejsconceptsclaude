@@ -30,9 +30,10 @@ export class DominoesScene implements SceneModule {
   private world: RapierWorld | null = null
   private dominoes: PhysicsBody[] = []
 
-  private tipping  = false
-  private tipAngle = 0
-  private elapsed  = 0
+  private tipping   = false
+  private tipAngle  = 0
+  private elapsed   = 0
+  private domino0Z  = 0   // world-Z of domino 0 (chain is centered, not starting at 0)
 
   private _canvas!: HTMLCanvasElement
   private _onClick!: () => void
@@ -52,11 +53,10 @@ export class DominoesScene implements SceneModule {
     this.scene = new THREE.Scene()
     this.scene.background = null
 
-    // Side-on view of the line — shows the cascade clearly
-    const midZ = (DOMINO_COUNT - 1) * SPACING / 2
+    // Chain is centered on z=0; camera looks straight at the midpoint from the side
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100)
-    this.camera.position.set(7, 4, midZ)
-    this.camera.lookAt(0, 1, midZ)
+    this.camera.position.set(7, 3, 0)
+    this.camera.lookAt(0, 1, 0)
 
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.7))
     const sun = new THREE.DirectionalLight(0xfff0d0, 3.0)
@@ -104,8 +104,10 @@ export class DominoesScene implements SceneModule {
     // and the wide face (HZ) faces the camera (X). Correct real-domino orientation.
     const yaw90 = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0))
 
+    const midZ = (DOMINO_COUNT - 1) * SPACING / 2
+    this.domino0Z = -midZ   // domino 0 sits at z = -midZ
     for (let i = 0; i < DOMINO_COUNT; i++) {
-      const z     = i * SPACING
+      const z     = i * SPACING - midZ
       const color = (i % 2 === 0 ? COLOR_A : COLOR_B).clone()
       color.offsetHSL((i / DOMINO_COUNT) * 0.1, 0, 0)
 
@@ -117,7 +119,7 @@ export class DominoesScene implements SceneModule {
 
       const bodyDesc = i === 0
         ? RAPIER.RigidBodyDesc.kinematicPositionBased()
-            .setTranslation(0, DOMINO_HY, 0)
+            .setTranslation(0, DOMINO_HY, z)
             .setRotation({ x: yaw90.x, y: yaw90.y, z: yaw90.z, w: yaw90.w })
         : RAPIER.RigidBodyDesc.dynamic()
             .setTranslation(0, DOMINO_HY, z)
@@ -141,7 +143,7 @@ export class DominoesScene implements SceneModule {
 
   private reset(): void {
     this.clearDominoes()
-    this.spawnDominoes()
+    this.spawnDominoes()   // sets this.domino0Z
     this.tipping  = false
     this.tipAngle = 0
     this.elapsed  = 0
@@ -156,7 +158,8 @@ export class DominoesScene implements SceneModule {
     const φ = this.tipAngle
 
     // After yaw90, the thin face (HX=0.08) is along Z. Pivot = front-bottom edge at (0, 0, HX).
-    const newZ = DOMINO_HX * (1 - Math.cos(φ)) + DOMINO_HY * Math.sin(φ)
+    const swing = DOMINO_HX * (1 - Math.cos(φ)) + DOMINO_HY * Math.sin(φ)
+    const newZ = this.domino0Z + swing
     const newY = DOMINO_HY * Math.cos(φ) + DOMINO_HX * Math.sin(φ)
 
     // World-space tilt around +X (pre-multiply = apply on top of existing yaw in world frame)
