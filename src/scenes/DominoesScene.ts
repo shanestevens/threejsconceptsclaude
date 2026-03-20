@@ -115,9 +115,9 @@ export class DominoesScene implements SceneModule {
     for (let i = 0; i < DOMINO_COUNT; i++) {
       const { x, z } = this.curvePos(i)
 
-      // Tangent angle: finite-difference toward next domino
-      const next = i < DOMINO_COUNT - 1 ? this.curvePos(i + 1) : this.curvePos(i - 1)
-      const prev = i > 0                ? this.curvePos(i - 1) : this.curvePos(i + 1)
+      // Tangent angle: one-sided difference at endpoints to avoid zero-vector bug
+      const next = i < DOMINO_COUNT - 1 ? this.curvePos(i + 1) : this.curvePos(i)
+      const prev = i > 0                ? this.curvePos(i - 1) : this.curvePos(i)
       const dx = next.x - prev.x
       const dz = next.z - prev.z
       const angle = Math.atan2(dx, dz)   // yaw so domino faces along curve
@@ -180,15 +180,15 @@ export class DominoesScene implements SceneModule {
       this.started = true
       const first = this.dominoes[0]
       if (first) {
-        // Push the TOP of domino 0 toward domino 1 (off-center → tips rather than slides)
+        // Torque around domino 0's local X axis (perpendicular to fall direction)
+        // cos(angle) = dz/len, -sin(angle) = -dx/len
         const c0 = this.curvePos(0)
         const c1 = this.curvePos(1)
-        const dx = c1.x - c0.x
-        const dz = c1.z - c0.z
-        const len = Math.sqrt(dx * dx + dz * dz)
-        first.body.applyImpulseAtPoint(
-          { x: (dx / len) * 1.5, y: 0, z: (dz / len) * 1.5 },
-          { x: c0.x, y: DOMINO_HY * 1.8, z: c0.z },
+        const fdx = c1.x - c0.x
+        const fdz = c1.z - c0.z
+        const flen = Math.sqrt(fdx * fdx + fdz * fdz)
+        first.body.applyTorqueImpulse(
+          { x: (fdz / flen) * 2.5, y: 0, z: -(fdx / flen) * 2.5 },
           true,
         )
       }
