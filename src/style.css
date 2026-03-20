@@ -458,6 +458,24 @@ body {
   height: 100%;
 }
 
+.canvas-hint {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.0);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 3;
+  transition: color 0.35s;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+.section-canvas-wrap:hover .canvas-hint {
+  color: rgba(255,255,255,0.38);
+}
+
 /* ── Footer ─────────────────────────────────────────────────── */
 .site-footer {
   text-align: center;

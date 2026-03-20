@@ -15,12 +15,13 @@ const ACCENT: Record<string, string> = {
   curves: '#f43f5e', fog: '#94a3b8',
   // Intermediate
   'animation-mixer': '#f97316', 'morph-targets': '#ec4899',
-  'render-target': '#06b6d4', sprites: '#fbbf24', lines: '#6366f1',
+  'render-target': '#06b6d4', sprites: '#fbbf24', lines: '#6366f1', 'canvas-texture': '#10b981',
   'post-processing': '#a855f7', 'custom-geometry': '#10b981', 'pbr-workflow': '#f43f5e',
   // Advanced
   gpgpu: '#ef4444', 'ray-marching': '#06b6d4', 'procedural-terrain': '#22c55e',
   hologram: '#00ffcc', 'cloth-sim': '#8b5cf6', 'depth-buffer': '#f59e0b',
-  'volumetric-light': '#fbbf24', 'batched-mesh': '#6366f1', 'gpu-picking': '#ec4899',
+  'volumetric-light': '#fbbf24', 'reaction-diffusion': '#a3e635', 'batched-mesh': '#6366f1',
+  'gpu-picking': '#ec4899',
 }
 
 const LEVEL_META: Record<Level, { label: string; badge: string; headline: string; sub: string }> = {
@@ -32,13 +33,13 @@ const LEVEL_META: Record<Level, { label: string; badge: string; headline: string
   },
   intermediate: {
     label: 'Intermediate',
-    badge: '8 concepts',
+    badge: '9 concepts',
     headline: 'Going Deeper',
     sub: 'AnimationMixer, MorphTargets, RenderTargets, Post-Processing, and custom geometry.',
   },
   advanced: {
     label: 'Advanced',
-    badge: '9 concepts',
+    badge: '11 concepts',
     headline: 'GPU-Level Mastery',
     sub: 'GPGPU, Ray Marching, Procedural Terrain, Cloth Simulation, Depth Buffer effects, and more.',
   },
@@ -140,6 +141,7 @@ function renderSections(sections: Section[]): string {
           </div>
           <div class="section-canvas-wrap">
             <canvas class="scene-canvas" data-scene-id="${s.id}" id="canvas-${s.id}"></canvas>
+            <div class="canvas-hint">⟳ drag &nbsp;·&nbsp; scroll to zoom</div>
           </div>
         </div>
       </section>

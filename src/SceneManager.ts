@@ -181,6 +181,10 @@ export class SceneManager {
           const { PBRWorkflowScene } = await import('./scenes/PBRWorkflowScene')
           return new PBRWorkflowScene()
         }
+        case 'canvas-texture': {
+          const { CanvasTextureScene } = await import('./scenes/CanvasTextureScene')
+          return new CanvasTextureScene()
+        }
         // ── Advanced ──────────────────────────────────────────
         case 'gpgpu': {
           const { GPGPUScene } = await import('./scenes/GPGPUScene')
@@ -209,6 +213,10 @@ export class SceneManager {
         case 'volumetric-light': {
           const { VolumetricLightScene } = await import('./scenes/VolumetricLightScene')
           return new VolumetricLightScene()
+        }
+        case 'reaction-diffusion': {
+          const { ReactionDiffusionScene } = await import('./scenes/ReactionDiffusionScene')
+          return new ReactionDiffusionScene()
         }
         case 'batched-mesh': {
           const { BatchedMeshScene } = await import('./scenes/BatchedMeshScene')

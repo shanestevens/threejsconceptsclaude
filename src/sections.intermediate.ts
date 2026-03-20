@@ -233,4 +233,44 @@ geometry.setAttribute('uv2',
   geometry.attributes.uv.clone()
 )`,
   },
+  {
+    id: 'canvas-texture',
+    title: 'Canvas Texture',
+    subtitle: 'CanvasTexture · Live 2D → 3D · needsUpdate',
+    description:
+      '<strong>CanvasTexture</strong> bridges the 2D Canvas API and WebGL. Create an off-screen <code>&lt;canvas&gt;</code>, draw anything with the 2D context (text, gradients, graphs, animations), then wrap it in <code>new THREE.CanvasTexture(canvas)</code>. Set <code>texture.needsUpdate = true</code> each frame to upload the new pixels to the GPU. Perfect for live HUDs, dynamic labels, gauges, and procedural art.',
+    tags: ['CanvasTexture', 'needsUpdate', 'CanvasRenderingContext2D', 'MeshBasicMaterial'],
+    code: `// Create an offscreen 2D canvas
+const canvas2d = document.createElement('canvas')
+canvas2d.width = canvas2d.height = 256
+const ctx = canvas2d.getContext('2d')!
+
+// Wrap it as a Three.js texture
+const tex = new THREE.CanvasTexture(canvas2d)
+const mesh = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2, 2),
+  new THREE.MeshStandardMaterial({ map: tex })
+)
+
+// Draw on it every frame — then flag for GPU upload
+function animate(time: number) {
+  ctx.clearRect(0, 0, 256, 256)
+  ctx.fillStyle = '#020a02'
+  ctx.fillRect(0, 0, 256, 256)
+
+  // Draw a sine wave
+  ctx.strokeStyle = '#00ff88'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  for (let x = 0; x < 256; x++) {
+    const y = 128 + Math.sin(x * 0.05 + time) * 60
+    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+  }
+  ctx.stroke()
+
+  tex.needsUpdate = true   // ← uploads canvas to GPU each frame
+  renderer.render(scene, camera)
+  requestAnimationFrame(animate)
+}`,
+  },
 ]

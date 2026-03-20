@@ -213,6 +213,38 @@ void main() {
 }`,
   },
   {
+    id: 'reaction-diffusion',
+    title: 'Reaction-Diffusion',
+    subtitle: 'Gray-Scott Model · GPGPU · Organic Patterns',
+    description:
+      'Two virtual chemicals (A and B) react and diffuse across a texture. The <strong>Gray-Scott equations</strong> run every frame inside a fragment shader: A is consumed when it meets B, B is self-replicating but slowly dies. With the right feed/kill parameters the system spontaneously grows <em>spots</em>, <em>stripes</em>, <em>coral</em>, or <em>labyrinths</em> — emergent complexity from a four-line equation. Same GPGPU ping-pong technique as Boids, but even more striking.',
+    tags: ['GPGPU', 'Gray-Scott', 'reaction-diffusion', 'FloatType', 'ping-pong'],
+    code: `// Gray-Scott equations in a fragment shader
+// dA/dt = Da·∇²A − A·B² + f·(1−A)
+// dB/dt = Db·∇²B + A·B² − (k+f)·B
+
+const SIM_FRAG = \`
+uniform sampler2D uAB;   // R=A, G=B concentrations
+const float Da=0.2097, Db=0.1050, f=0.055, k=0.062;
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / 256.0;
+  vec2 d  = 1.0 / 256.0;
+  vec2 c  = texture2D(uAB, uv).xy;
+  vec2 lap = texture2D(uAB, mod(uv+vec2( d.x,0),1.)).xy
+           + texture2D(uAB, mod(uv+vec2(-d.x,0),1.)).xy
+           + texture2D(uAB, mod(uv+vec2(0, d.y),1.)).xy
+           + texture2D(uAB, mod(uv+vec2(0,-d.y),1.)).xy
+           - 4.0 * c;
+  float A=c.x, B=c.y, abb=A*B*B;
+  float nA = clamp(A + Da*lap.x - abb + f*(1.-A), 0., 1.);
+  float nB = clamp(B + Db*lap.y + abb - (k+f)*B,  0., 1.);
+  gl_FragColor = vec4(nA, nB, 0., 1.);
+}\`
+
+// Run 12 steps per frame, map B → cosine colour palette`,
+  },
+  {
     id: 'batched-mesh',
     title: 'BatchedMesh & LOD',
     subtitle: 'One Draw Call · Per-Instance Colour · GPU Picking',
