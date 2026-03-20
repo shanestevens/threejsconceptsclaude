@@ -71,9 +71,21 @@ export class RagdollScene implements SceneModule {
   private resetTimer = 0
   private resetCount = 0
 
+  // Drag state
+  private dragBody: RigidBody | null = null
+  private dragTarget = new THREE.Vector3()
+  private dragPlane  = new THREE.Plane()
+  private raycaster  = new THREE.Raycaster()
+
+  private _canvas!: HTMLCanvasElement
+  private _onMouseDown!: (e: MouseEvent) => void
+  private _onMouseMove!: (e: MouseEvent) => void
+  private _onMouseUp!:   ()             => void
+
   // ─── init ─────────────────────────────────────────────────────────────────
 
   init(canvas: HTMLCanvasElement): void {
+    this._canvas = canvas
     const { width, height } = canvas.getBoundingClientRect()
 
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
@@ -106,6 +118,14 @@ export class RagdollScene implements SceneModule {
     fill.position.set(-6, -4, -8)
     this.scene.add(fill)
 
+    // Drag event listeners
+    this._onMouseDown = (e) => this._handleMouseDown(e)
+    this._onMouseMove = (e) => this._handleMouseMove(e)
+    this._onMouseUp   = ()  => this._handleMouseUp()
+    canvas.addEventListener('mousedown', this._onMouseDown)
+    canvas.addEventListener('mousemove', this._onMouseMove)
+    window.addEventListener('mouseup',   this._onMouseUp)
+
     initRapier().then(() => this.initPhysics())
   }
 
@@ -134,9 +154,6 @@ export class RagdollScene implements SceneModule {
 
   // ─── Ragdoll helpers ──────────────────────────────────────────────────────
 
-  /**
-   * Spawn one ragdoll offset by (xOffset, zOffset) from the canonical positions.
-   */
   private spawnRagdoll(xOffset: number, zOffset: number): void {
     const world = this.world!
     const partBodies: RigidBody[] = new Array(PARTS.length)
@@ -201,6 +218,7 @@ export class RagdollScene implements SceneModule {
   }
 
   private clearRagdolls(): void {
+    this.dragBody = null
     const world = this.world!
     for (let i = 0; i < this.bodies.length; i++) {
       world.removeRigidBody(this.bodies[i])
@@ -217,14 +235,82 @@ export class RagdollScene implements SceneModule {
     this.resetCount++
 
     if (this.resetCount >= 2) {
-      // 2nd+ reset: spawn 3 ragdolls at x offsets -2, 0, +2
       for (const xOff of [-2, 0, 2]) {
         this.spawnRagdoll(xOff, 0)
       }
     } else {
-      // 1st reset: single ragdoll
       this.spawnRagdoll(0, 0)
     }
+  }
+
+  // ─── Drag interaction ─────────────────────────────────────────────────────
+
+  private _handleMouseDown(e: MouseEvent): void {
+    if (!this.ready || this.meshes.length === 0) return
+    const rect = this._canvas.getBoundingClientRect()
+    const mouse = new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width)  *  2 - 1,
+      -((e.clientY - rect.top)  / rect.height) *  2 + 1,
+    )
+    this.raycaster.setFromCamera(mouse, this.camera)
+    const hits = this.raycaster.intersectObjects(this.meshes)
+    if (hits.length === 0) return
+
+    const idx = this.meshes.indexOf(hits[0].object as THREE.Mesh)
+    if (idx === -1) return
+
+    this.dragBody = this.bodies[idx]
+
+    // Drag plane through hit point, facing camera
+    const camDir = new THREE.Vector3()
+    this.camera.getWorldDirection(camDir)
+    this.dragPlane.setFromNormalAndCoplanarPoint(camDir, hits[0].point)
+    this.dragTarget.copy(hits[0].point)
+
+    this._canvas.style.cursor = 'grabbing'
+  }
+
+  private _handleMouseMove(e: MouseEvent): void {
+    if (!this.dragBody) {
+      this._canvas.style.cursor = 'grab'
+      return
+    }
+    const rect = this._canvas.getBoundingClientRect()
+    const mouse = new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width)  *  2 - 1,
+      -((e.clientY - rect.top)  / rect.height) *  2 + 1,
+    )
+    this.raycaster.setFromCamera(mouse, this.camera)
+    const hit = new THREE.Vector3()
+    if (this.raycaster.ray.intersectPlane(this.dragPlane, hit)) {
+      this.dragTarget.copy(hit)
+    }
+  }
+
+  private _handleMouseUp(): void {
+    this.dragBody = null
+    this._canvas.style.cursor = 'grab'
+  }
+
+  private _applyDragForce(): void {
+    if (!this.dragBody) return
+    const pos = this.dragBody.translation()
+    const dx  = this.dragTarget.x - pos.x
+    const dy  = this.dragTarget.y - pos.y
+    const dz  = this.dragTarget.z - pos.z
+
+    // Spring toward target, damp existing velocity
+    const vel = this.dragBody.linvel()
+    const STIFFNESS = 400
+    const DT        = 1 / 60
+    this.dragBody.applyImpulse({
+      x: dx * STIFFNESS * DT - vel.x * 0.8,
+      y: dy * STIFFNESS * DT - vel.y * 0.8 + 9.81 * DT,  // counteract gravity
+      z: dz * STIFFNESS * DT - vel.z * 0.8,
+    }, true)
+    // Damp rotation so the body doesn't spin wildly while grabbed
+    const av = this.dragBody.angvel()
+    this.dragBody.applyTorqueImpulse({ x: -av.x * 0.5, y: -av.y * 0.5, z: -av.z * 0.5 }, true)
   }
 
   // ─── SceneModule interface ────────────────────────────────────────────────
@@ -235,6 +321,7 @@ export class RagdollScene implements SceneModule {
       return
     }
 
+    this._applyDragForce()
     this.world.step()
 
     for (let i = 0; i < this.bodies.length; i++) {
@@ -261,6 +348,10 @@ export class RagdollScene implements SceneModule {
   }
 
   destroy(): void {
+    this._canvas.removeEventListener('mousedown', this._onMouseDown)
+    this._canvas.removeEventListener('mousemove', this._onMouseMove)
+    window.removeEventListener('mouseup', this._onMouseUp)
+    this._canvas.style.cursor = ''
     this.renderer.dispose()
     if (this.world) {
       this.world.free()
