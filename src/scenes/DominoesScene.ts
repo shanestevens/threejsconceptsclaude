@@ -28,6 +28,7 @@ export class DominoesScene implements SceneModule {
 
   private world: RapierWorld | null = null
   private dominoes: PhysicsBody[] = []
+  private firstAngle = 0     // yaw of domino 0 — needed for setAngvel axis
 
   private ready      = false
   private started    = false
@@ -137,6 +138,8 @@ export class DominoesScene implements SceneModule {
       mesh.rotation.y    = angle
       this.scene.add(mesh)
 
+      if (i === 0) this.firstAngle = angle
+
       // Physics: dynamic body, start upright — rotation on the body, not the collider
       const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, 0))
       const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
@@ -180,15 +183,12 @@ export class DominoesScene implements SceneModule {
       this.started = true
       const first = this.dominoes[0]
       if (first) {
-        // Torque around domino 0's local X axis (perpendicular to fall direction)
-        // cos(angle) = dz/len, -sin(angle) = -dx/len
-        const c0 = this.curvePos(0)
-        const c1 = this.curvePos(1)
-        const fdx = c1.x - c0.x
-        const fdz = c1.z - c0.z
-        const flen = Math.sqrt(fdx * fdx + fdz * fdz)
-        first.body.applyTorqueImpulse(
-          { x: (fdz / flen) * 2.5, y: 0, z: -(fdx / flen) * 2.5 },
+        // Use setAngvel (guaranteed in all Rapier versions) to spin domino 0
+        // around its local X axis — the axis perpendicular to its fall direction.
+        // For THREE.js Y-rotation by angle a: local X in world = (cos(a), 0, -sin(a))
+        const a = this.firstAngle
+        first.body.setAngvel(
+          { x: Math.cos(a) * 3.5, y: 0, z: -Math.sin(a) * 3.5 },
           true,
         )
       }
