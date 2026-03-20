@@ -2,6 +2,7 @@ import type { Level, Section } from './types'
 import { basicSections } from './sections.basic'
 import { intermediateSections } from './sections.intermediate'
 import { advancedSections } from './sections.advanced'
+import { physicsSections } from './sections.physics'
 import { SceneManager } from './SceneManager'
 import './style.css'
 
@@ -22,6 +23,9 @@ const ACCENT: Record<string, string> = {
   hologram: '#00ffcc', 'cloth-sim': '#8b5cf6', 'depth-buffer': '#f59e0b',
   'volumetric-light': '#fbbf24', 'reaction-diffusion': '#a3e635', 'batched-mesh': '#6366f1',
   'gpu-picking': '#ec4899',
+  // Physics
+  'physics-rigid-bodies': '#f97316', 'physics-wrecking-ball': '#ef4444',
+  'physics-dominoes': '#6366f1', 'physics-jenga': '#22c55e', 'physics-ragdoll': '#ec4899',
 }
 
 const LEVEL_META: Record<Level, { label: string; badge: string; headline: string; sub: string }> = {
@@ -42,6 +46,12 @@ const LEVEL_META: Record<Level, { label: string; badge: string; headline: string
     badge: '11 concepts',
     headline: 'GPU-Level Mastery',
     sub: 'GPGPU, Ray Marching, Procedural Terrain, Cloth Simulation, Depth Buffer effects, and more.',
+  },
+  physics: {
+    label: 'Physics',
+    badge: '5 demos',
+    headline: 'Physics Simulation',
+    sub: 'Rigid Bodies, Wrecking Ball, Dominoes, Jenga and Ragdoll — all powered by Rapier.js.',
   },
 }
 
@@ -64,6 +74,7 @@ let sceneManager = new SceneManager()
 function sectionsFor(level: Level): Section[] {
   if (level === 'intermediate') return intermediateSections
   if (level === 'advanced')     return advancedSections
+  if (level === 'physics')      return physicsSections
   return basicSections
 }
 
@@ -73,7 +84,7 @@ function renderTopNav(): string {
       <div class="level-nav-inner">
         <span class="brand">Three.js Concepts</span>
         <div class="level-tabs">
-          ${(['basic', 'intermediate', 'advanced'] as Level[]).map((l) => `
+          ${(['basic', 'intermediate', 'advanced', 'physics'] as Level[]).map((l) => `
             <button class="level-tab ${l === currentLevel ? 'active' : ''}" data-level="${l}">
               ${LEVEL_META[l].label}
               <span class="tab-count">${LEVEL_META[l].badge}</span>

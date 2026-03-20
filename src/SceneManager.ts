@@ -226,6 +226,27 @@ export class SceneManager {
           const { GPUPickingScene } = await import('./scenes/GPUPickingScene')
           return new GPUPickingScene()
         }
+        // ── Physics ───────────────────────────────────────────
+        case 'physics-rigid-bodies': {
+          const { RigidBodiesScene } = await import('./scenes/RigidBodiesScene')
+          return new RigidBodiesScene()
+        }
+        case 'physics-wrecking-ball': {
+          const { WreckingBallScene } = await import('./scenes/WreckingBallScene')
+          return new WreckingBallScene()
+        }
+        case 'physics-dominoes': {
+          const { DominoesScene } = await import('./scenes/DominoesScene')
+          return new DominoesScene()
+        }
+        case 'physics-jenga': {
+          const { JengaScene } = await import('./scenes/JengaScene')
+          return new JengaScene()
+        }
+        case 'physics-ragdoll': {
+          const { RagdollScene } = await import('./scenes/RagdollScene')
+          return new RagdollScene()
+        }
         default:
           return null
       }
