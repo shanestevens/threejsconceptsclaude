@@ -28,16 +28,20 @@ export class DominoesScene implements SceneModule {
 
   private world: RapierWorld | null = null
   private dominoes: PhysicsBody[] = []
-  private firstAngle = 0     // yaw of domino 0 — needed for setAngvel axis
+  private firstAngle = 0     // yaw of domino 0 — needed for tipping axis
 
   private ready      = false
   private started    = false
-  private elapsed    = 0      // seconds since physics init
-  private resetTimer = 0      // seconds since last spawn
+  private elapsed    = 0
+  private resetTimer = 0
+
+  private _canvas!: HTMLCanvasElement
+  private _onClick!: () => void
 
   // ─── init ────────────────────────────────────────────────────────────────────
 
   init(canvas: HTMLCanvasElement): void {
+    this._canvas = canvas
     const { width, height } = canvas.getBoundingClientRect()
 
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
@@ -70,7 +74,44 @@ export class DominoesScene implements SceneModule {
     fill.position.set(-6, -3, -6)
     this.scene.add(fill)
 
+    // Click to restart
+    this._onClick = () => {
+      if (!this.ready) return
+      this.clearDominoes()
+      this.spawnDominoes()
+      this.elapsed = 0
+      this.resetTimer = 0
+      this.started = false
+    }
+    canvas.addEventListener('click', this._onClick)
+    canvas.style.cursor = 'pointer'
+
     initRapier().then(() => this.initPhysics())
+  }
+
+  // ─── Trigger first domino ────────────────────────────────────────────────────
+
+  private triggerFirst(): void {
+    const first = this.dominoes[0]
+    if (!first) return
+
+    // Compute forward direction (toward domino 1)
+    const c0 = this.curvePos(0)
+    const c1 = this.curvePos(1)
+    const fdx = c1.x - c0.x
+    const fdz = c1.z - c0.z
+    const flen = Math.sqrt(fdx * fdx + fdz * fdz)
+    const nx = fdx / flen
+    const nz = fdz / flen
+
+    // setLinvel with upward Y lifts the domino off the floor for a few frames,
+    // removing the contact constraint that otherwise cancels angular velocity.
+    first.body.setLinvel({ x: nx * 0.5, y: 1.2, z: nz * 0.5 }, true)
+
+    // Local X axis = (cos(a), 0, -sin(a)) for THREE.js Y-rotation by angle a.
+    // Spinning around this axis tips the domino forward toward the chain.
+    const a = this.firstAngle
+    first.body.setAngvel({ x: Math.cos(a) * 3.0, y: 0, z: -Math.sin(a) * 3.0 }, true)
   }
 
   // ─── Physics init ─────────────────────────────────────────────────────────────
@@ -181,17 +222,7 @@ export class DominoesScene implements SceneModule {
     // Tip the first domino after a short delay
     if (!this.started && this.elapsed >= IMPULSE_DELAY) {
       this.started = true
-      const first = this.dominoes[0]
-      if (first) {
-        // Use setAngvel (guaranteed in all Rapier versions) to spin domino 0
-        // around its local X axis — the axis perpendicular to its fall direction.
-        // For THREE.js Y-rotation by angle a: local X in world = (cos(a), 0, -sin(a))
-        const a = this.firstAngle
-        first.body.setAngvel(
-          { x: Math.cos(a) * 3.5, y: 0, z: -Math.sin(a) * 3.5 },
-          true,
-        )
-      }
+      this.triggerFirst()
     }
 
     // Periodic reset
@@ -222,6 +253,8 @@ export class DominoesScene implements SceneModule {
   }
 
   destroy(): void {
+    this._canvas?.removeEventListener('click', this._onClick)
+    this._canvas && (this._canvas.style.cursor = '')
     this.renderer.dispose()
     if (this.world) {
       this.world.free()
