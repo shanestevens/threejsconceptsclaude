@@ -1,6 +1,6 @@
 import type * as THREE from 'three'
 
-export type Level = 'basic' | 'intermediate' | 'advanced' | 'physics'
+export type Level = 'basic' | 'intermediate' | 'advanced' | 'physics' | 'experimental'
 
 export interface Section {
   id: string

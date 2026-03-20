@@ -259,6 +259,27 @@ export class SceneManager {
           const { RagdollScene } = await import('./scenes/RagdollScene')
           return new RagdollScene()
         }
+        // ── Experimental ──────────────────────────────────────
+        case 'fluid-sim': {
+          const { FluidSimScene } = await import('./scenes/FluidSimScene')
+          return new FluidSimScene()
+        }
+        case 'path-tracer': {
+          const { PathTracerScene } = await import('./scenes/PathTracerScene')
+          return new PathTracerScene()
+        }
+        case 'particle-life': {
+          const { ParticleLifeScene } = await import('./scenes/ParticleLifeScene')
+          return new ParticleLifeScene()
+        }
+        case 'audio-visualizer': {
+          const { AudioVisualizerScene } = await import('./scenes/AudioVisualizerScene')
+          return new AudioVisualizerScene()
+        }
+        case 'game-of-life': {
+          const { GameOfLifeScene } = await import('./scenes/GameOfLifeScene')
+          return new GameOfLifeScene()
+        }
         default:
           return null
       }

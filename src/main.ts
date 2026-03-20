@@ -3,6 +3,7 @@ import { basicSections } from './sections.basic'
 import { intermediateSections } from './sections.intermediate'
 import { advancedSections } from './sections.advanced'
 import { physicsSections } from './sections.physics'
+import { experimentalSections } from './sections.experimental'
 import { SceneManager } from './SceneManager'
 import './style.css'
 
@@ -27,6 +28,9 @@ const ACCENT: Record<string, string> = {
   // Physics
   'physics-rigid-bodies': '#f97316', 'physics-wrecking-ball': '#ef4444',
   'physics-dominoes': '#6366f1', 'physics-jenga': '#22c55e', 'physics-ragdoll': '#ec4899',
+  // Experimental
+  'fluid-sim': '#38bdf8', 'path-tracer': '#a78bfa', 'particle-life': '#34d399',
+  'audio-visualizer': '#f472b6', 'game-of-life': '#00ffcc',
 }
 
 const LEVEL_META: Record<Level, { label: string; badge: string; headline: string; sub: string }> = {
@@ -54,6 +58,12 @@ const LEVEL_META: Record<Level, { label: string; badge: string; headline: string
     headline: 'Physics Simulation',
     sub: 'Rigid Bodies, Wrecking Ball, Dominoes, Jenga and Ragdoll — all powered by Rapier.js.',
   },
+  experimental: {
+    label: 'Experimental',
+    badge: '5 demos',
+    headline: 'Pushing the Envelope',
+    sub: 'Navier-Stokes fluid, Monte Carlo path tracing, Particle Life, Audio Visualizer, and GPU Game of Life.',
+  },
 }
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -73,9 +83,10 @@ let sceneManager = new SceneManager()
 
 // ── Build ────────────────────────────────────────────────────
 function sectionsFor(level: Level): Section[] {
-  if (level === 'intermediate') return intermediateSections
-  if (level === 'advanced')     return advancedSections
-  if (level === 'physics')      return physicsSections
+  if (level === 'intermediate')  return intermediateSections
+  if (level === 'advanced')      return advancedSections
+  if (level === 'physics')       return physicsSections
+  if (level === 'experimental')  return experimentalSections
   return basicSections
 }
 
@@ -85,7 +96,7 @@ function renderTopNav(): string {
       <div class="level-nav-inner">
         <span class="brand">Three.js Concepts</span>
         <div class="level-tabs">
-          ${(['basic', 'intermediate', 'advanced', 'physics'] as Level[]).map((l) => `
+          ${(['basic', 'intermediate', 'advanced', 'physics', 'experimental'] as Level[]).map((l) => `
             <button class="level-tab ${l === currentLevel ? 'active' : ''}" data-level="${l}">
               ${LEVEL_META[l].label}
               <span class="tab-count">${LEVEL_META[l].badge}</span>
