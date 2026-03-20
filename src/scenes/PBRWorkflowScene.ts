@@ -30,24 +30,29 @@ function makeAOMap(): THREE.CanvasTexture {
 }
 
 function makeNormalMap(): THREE.CanvasTexture {
-  const c = document.createElement('canvas'); c.width = c.height = 256
+  const size = 256
+  const c = document.createElement('canvas'); c.width = c.height = size
   const ctx = c.getContext('2d')!
-  // Tileable brickwork normal approximation
-  const size = 256, brick = 64, mortar = 4
-  ctx.fillStyle = `rgb(128,128,255)` // flat normal
-  ctx.fillRect(0, 0, size, size)
-  for (let row = 0; row < size / brick; row++) {
-    for (let col = 0; col < size / brick + 1; col++) {
-      const offset = (row % 2) * (brick / 2)
-      const x = (col * brick - offset + size) % size
-      const y = row * brick
-      // Mortar groove — points left/right
-      ctx.fillStyle = `rgb(90,128,200)`
-      ctx.fillRect(x, y, mortar, brick)
-      ctx.fillStyle = `rgb(128,90,200)`
-      ctx.fillRect(0, y, size, mortar)
+  const img = ctx.createImageData(size, size)
+  // Sinusoidal bump field: height h(u,v) = sin(u·f)·sin(v·f)
+  // Tangent-space normals from partial derivatives, then packed to RGB
+  const freq = Math.PI * 2 * 10   // 10 bumps across
+  const amp  = 0.08                // bump strength
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const u = x / size, v = y / size
+      const dhdx = Math.cos(u * freq) * Math.sin(v * freq) * amp
+      const dhdy = Math.sin(u * freq) * Math.cos(v * freq) * amp
+      const nx = -dhdx, ny = -dhdy, nz = 1
+      const len = Math.sqrt(nx * nx + ny * ny + nz * nz)
+      const i = (y * size + x) * 4
+      img.data[i]   = ((nx / len) * 0.5 + 0.5) * 255
+      img.data[i+1] = ((ny / len) * 0.5 + 0.5) * 255
+      img.data[i+2] = ((nz / len) * 0.5 + 0.5) * 255
+      img.data[i+3] = 255
     }
   }
+  ctx.putImageData(img, 0, 0)
   return new THREE.CanvasTexture(c)
 }
 

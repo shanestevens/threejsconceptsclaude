@@ -210,6 +210,10 @@ export class SceneManager {
           const { VolumetricLightScene } = await import('./scenes/VolumetricLightScene')
           return new VolumetricLightScene()
         }
+        case 'batched-mesh': {
+          const { BatchedMeshScene } = await import('./scenes/BatchedMeshScene')
+          return new BatchedMeshScene()
+        }
         case 'gpu-picking': {
           const { GPUPickingScene } = await import('./scenes/GPUPickingScene')
           return new GPUPickingScene()

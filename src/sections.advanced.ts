@@ -213,6 +213,37 @@ void main() {
 }`,
   },
   {
+    id: 'batched-mesh',
+    title: 'BatchedMesh & LOD',
+    subtitle: 'One Draw Call · Per-Instance Colour · GPU Picking',
+    description:
+      '<strong>BatchedMesh</strong> packs thousands of different geometries into a single GPU draw call — far beyond what <code>InstancedMesh</code> allows (which requires all instances to share the same geometry). Each instance can have its own geometry, transform, and colour. Combined with <strong>LOD</strong> (swapping high/low-poly geometry based on camera distance via <code>setGeometryIdAt</code>) and <strong>raycasting</strong>, this is how production engines render entire cities or battlefields at 60 fps.',
+    tags: ['BatchedMesh', 'addGeometry', 'addInstance', 'setColorAt', 'LOD'],
+    code: `// One BatchedMesh holds N different geometry types + M instances each
+const batch = new THREE.BatchedMesh(maxInstances, maxVertices, maxIndices, mat)
+
+// Register each unique geometry once
+const sphereId = batch.addGeometry(new THREE.SphereGeometry(0.3, 18, 14))
+const boxId    = batch.addGeometry(new THREE.BoxGeometry(0.5, 0.5, 0.5))
+const knotId   = batch.addGeometry(new THREE.TorusKnotGeometry(0.2, 0.07, 64, 8))
+
+// Add instances — each independently positioned and coloured
+for (let i = 0; i < 400; i++) {
+  const iid = batch.addInstance(sphereId)        // pick any registered geo
+  matrix.setPosition(randomPos())
+  batch.setMatrixAt(iid, matrix)
+  batch.setColorAt(iid, randomColor())
+}
+
+// LOD — swap geometry per-instance based on camera distance
+if (dist > 20) batch.setGeometryIdAt(iid, sphereLowId)
+else           batch.setGeometryIdAt(iid, sphereHighId)
+
+// Raycast works out of the box
+const hits = raycaster.intersectObject(batch)
+const hoveredId = hits[0]?.batchId ?? -1`,
+  },
+  {
     id: 'gpu-picking',
     title: 'GPU Picking',
     subtitle: 'Color IDs · readPixels · Render Target',

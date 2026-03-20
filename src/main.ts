@@ -20,7 +20,7 @@ const ACCENT: Record<string, string> = {
   // Advanced
   gpgpu: '#ef4444', 'ray-marching': '#06b6d4', 'procedural-terrain': '#22c55e',
   hologram: '#00ffcc', 'cloth-sim': '#8b5cf6', 'depth-buffer': '#f59e0b',
-  'volumetric-light': '#fbbf24', 'gpu-picking': '#ec4899',
+  'volumetric-light': '#fbbf24', 'batched-mesh': '#6366f1', 'gpu-picking': '#ec4899',
 }
 
 const LEVEL_META: Record<Level, { label: string; badge: string; headline: string; sub: string }> = {
@@ -38,7 +38,7 @@ const LEVEL_META: Record<Level, { label: string; badge: string; headline: string
   },
   advanced: {
     label: 'Advanced',
-    badge: '8 concepts',
+    badge: '9 concepts',
     headline: 'GPU-Level Mastery',
     sub: 'GPGPU, Ray Marching, Procedural Terrain, Cloth Simulation, Depth Buffer effects, and more.',
   },
