@@ -87,7 +87,7 @@ void main() {
   vSpeed    = clamp(length(vel) / 5.0, 0.0, 1.0);
   vec4 mv   = modelViewMatrix * vec4(pos, 1.0);
   gl_Position  = projectionMatrix * mv;
-  gl_PointSize = (2.0 + vSpeed * 2.5) * (280.0 / -mv.z);
+  gl_PointSize = clamp((1.5 + vSpeed * 1.5) * 24.0 / -mv.z, 1.0, 5.0);
 }
 `
 
