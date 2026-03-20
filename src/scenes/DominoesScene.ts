@@ -100,6 +100,10 @@ export class DominoesScene implements SceneModule {
     if (!this.world) return
     const geo = new THREE.BoxGeometry(DOMINO_HX * 2, DOMINO_HY * 2, DOMINO_HZ * 2)
 
+    // Rotate 90° around Y so the thin face (HX) faces along the chain (Z),
+    // and the wide face (HZ) faces the camera (X). Correct real-domino orientation.
+    const yaw90 = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0))
+
     for (let i = 0; i < DOMINO_COUNT; i++) {
       const z     = i * SPACING
       const color = (i % 2 === 0 ? COLOR_A : COLOR_B).clone()
@@ -108,11 +112,16 @@ export class DominoesScene implements SceneModule {
       const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.25 }))
       mesh.castShadow = mesh.receiveShadow = true
       mesh.position.set(0, DOMINO_HY, z)
+      mesh.quaternion.copy(yaw90)
       this.scene.add(mesh)
 
       const bodyDesc = i === 0
-        ? RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, DOMINO_HY, 0)
-        : RAPIER.RigidBodyDesc.dynamic().setTranslation(0, DOMINO_HY, z)
+        ? RAPIER.RigidBodyDesc.kinematicPositionBased()
+            .setTranslation(0, DOMINO_HY, 0)
+            .setRotation({ x: yaw90.x, y: yaw90.y, z: yaw90.z, w: yaw90.w })
+        : RAPIER.RigidBodyDesc.dynamic()
+            .setTranslation(0, DOMINO_HY, z)
+            .setRotation({ x: yaw90.x, y: yaw90.y, z: yaw90.z, w: yaw90.w })
 
       const body = this.world.createRigidBody(bodyDesc)
       this.world.createCollider(RAPIER.ColliderDesc.cuboid(DOMINO_HX, DOMINO_HY, DOMINO_HZ), body)
@@ -146,17 +155,18 @@ export class DominoesScene implements SceneModule {
     this.tipAngle = Math.min(this.tipAngle + TIP_RATE * dt, Math.PI / 2)
     const φ = this.tipAngle
 
-    // CoM position as domino pivots around its front-bottom edge (at z = HZ, y = 0)
-    const swing = DOMINO_HZ * (1 - Math.cos(φ)) + DOMINO_HY * Math.sin(φ)
-    const newY  = DOMINO_HY * Math.cos(φ) + DOMINO_HZ * Math.sin(φ)
-    const newZ  = swing   // domino 0 starts at z = 0
+    // After yaw90, the thin face (HX=0.08) is along Z. Pivot = front-bottom edge at (0, 0, HX).
+    const newZ = DOMINO_HX * (1 - Math.cos(φ)) + DOMINO_HY * Math.sin(φ)
+    const newY = DOMINO_HY * Math.cos(φ) + DOMINO_HX * Math.sin(φ)
 
-    // Rotation: positive angle around +X tilts top toward +Z (toward domino 1)
+    // World-space tilt around +X (pre-multiply = apply on top of existing yaw in world frame)
     const tiltQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), φ)
+    const yaw90 = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0))
+    const newQ  = tiltQ.multiply(yaw90)   // tiltQ * yaw90 = world tilt applied after initial yaw
 
     const d0 = this.dominoes[0]
     d0.body.setNextKinematicTranslation({ x: 0, y: newY, z: newZ })
-    d0.body.setNextKinematicRotation({ x: tiltQ.x, y: tiltQ.y, z: tiltQ.z, w: tiltQ.w })
+    d0.body.setNextKinematicRotation({ x: newQ.x, y: newQ.y, z: newQ.z, w: newQ.w })
   }
 
   // ─── SceneModule interface ─────────────────────────────────────────────────
